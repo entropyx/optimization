@@ -25,5 +25,11 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldResemble, []float64{2, 4, 6})
 		})
 
+		Convey("The contraction of [1 2 3] is [0.5,1,1.5]", func() {
+			beta := 0.5
+			out := contraction(x, c, beta)
+			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
+		})
+
 	})
 }
