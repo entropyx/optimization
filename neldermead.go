@@ -7,3 +7,11 @@ func reflection(x []float64, c []float64, alpha float64) (out []float64) {
 	}
 	return
 }
+
+func expansion(x []float64, c []float64, gamma float64) (out []float64) {
+	l := len(x)
+	for i := 0; i < l; i++ {
+		out = append(out, c[i]+gamma*(x[i]-c[i]))
+	}
+	return
+}
