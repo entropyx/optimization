@@ -31,5 +31,11 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
 		})
 
+		Convey("The shrink of [1 2 3] respect to [0,0,0] is [0.5,1,1.5]", func() {
+			delta := 0.5
+			out := shrink(x, c, delta)
+			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
+		})
+
 	})
 }
