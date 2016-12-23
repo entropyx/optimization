@@ -1,5 +1,10 @@
 package optimization
 
+import (
+	"fmt"
+	"math/rand"
+)
+
 type function interface {
 	f() []float64
 }
@@ -37,5 +42,12 @@ func shrink(x []float64, y []float64, delta float64) (out []float64) {
 }
 
 func neldermead(variable []float64, fn function) {
+	var p [][]float64
+	n := len(variable)
+	p = append(p, variable)
+	for i := 0; i < n+1; i++ {
+		fmt.Println(rand.Float64())
+		//p = append(p, rand.Float64(0.1))
+	}
 
 }
