@@ -72,6 +72,29 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
 		})
 
+		Convey("The mean of [1 2 3] is 2", func() {
+			out := mean(x)
+			So(out, ShouldEqual, 2)
+		})
+
+		Convey("The mean of each raw of [[1 2 3] [4 5 6]] is [2 5]", func() {
+			x := [][]float64{
+				[]float64{1, 2, 3},
+				[]float64{4, 5, 6},
+			}
+			out := apply(x, 1, mean)
+			So(out, ShouldResemble, []float64{2, 5})
+		})
+
+		Convey("The mean of each column of [[1 2 3] [4 5 6]] is [2.5 3.5 4.5]", func() {
+			x := [][]float64{
+				[]float64{1, 2, 3},
+				[]float64{4, 5, 6},
+			}
+			out := apply(x, 2, mean)
+			So(out, ShouldResemble, []float64{2.5, 3.5, 4.5})
+		})
+
 		Convey("Given the following dataset ...", func() {
 			var X [][]float64
 			var y []float64

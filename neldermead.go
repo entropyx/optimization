@@ -6,9 +6,7 @@ import (
 	"math/rand"
 )
 
-type function interface {
-	f() []float64
-}
+type function func([]float64) float64
 
 func reflection(x []float64, c []float64, alpha float64) (out []float64) {
 	l := len(x)
@@ -55,12 +53,49 @@ func around(c []float64, n int) (out [][]float64) {
 	return
 }
 
+func mean(x []float64) float64 {
+	out := 0.00
+	n := len(x)
+	for i := 0; i < n; i++ {
+		out = out + x[i]
+	}
+	out = out / float64(n)
+	return out
+}
+
+func apply(X [][]float64, n int, f function) (out []float64) {
+	switch {
+	// apply by row
+	case n == 1:
+		for i := 0; i < len(X); i++ {
+			out = append(out, f(X[i]))
+		}
+		// apply by column
+	case n == 2:
+		var t [][]float64
+		for i := 0; i < len(X[0]); i++ {
+			var column []float64
+			for j := 0; j < len(X); j++ {
+				column = append(column, X[j][i])
+			}
+			t = append(t, column)
+		}
+		fmt.Println(t)
+		for i := 0; i < len(t); i++ {
+			out = append(out, f(t[i]))
+		}
+	case n > 2 || n < 1:
+		panic("n must be 1 or 2!.")
+	}
+	return out
+}
+
 func neldermead(variable []float64, fn function, iter int) {
 	n := len(variable)
-	p := append(variable, around(variable, n+1))
+	p := append(around(variable, n+1), variable)
 	fmt.Println(p)
 	for i := 0; i < iter; i++ {
-		var f []float64
+		//var f []float64
 
 	}
 
