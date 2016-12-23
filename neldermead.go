@@ -6,7 +6,14 @@ import (
 	"math/rand"
 )
 
-type function func([]float64) float64
+type parameter struct {
+	theta, y []float64
+	X        [][]float64
+}
+
+type fn func([]float64) float64
+
+type function func(parameter) float64
 
 func reflection(x []float64, c []float64, alpha float64) (out []float64) {
 	l := len(x)
@@ -63,7 +70,7 @@ func mean(x []float64) float64 {
 	return out
 }
 
-func apply(X [][]float64, n int, f function) (out []float64) {
+func apply(X [][]float64, n int, f fn) (out []float64) {
 	switch {
 	// apply by row
 	case n == 1:
@@ -90,12 +97,13 @@ func apply(X [][]float64, n int, f function) (out []float64) {
 	return out
 }
 
-func neldermead(variable []float64, fn function, iter int) {
-	n := len(variable)
-	p := append(around(variable, n+1), variable)
+func neldermead(variables parameter, fn function, iter int) {
+	n := len(variables.theta)
+	p := append(around(variables.theta, n+1), variable)
 	fmt.Println(p)
 	for i := 0; i < iter; i++ {
 		//var f []float64
+		fmt.Println(fn(variables))
 
 	}
 
