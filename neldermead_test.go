@@ -1,7 +1,10 @@
 package optimization
 
 import (
+	"io/ioutil"
 	"math"
+	"strconv"
+	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -13,19 +16,29 @@ func g(z float64) float64 {
 }
 
 // hypothesis
-func h(x []float64, theta []float64) float64 {
-	l := len(x)
-	prod := 0.0
-	for i := 0; i < l; i++ {
-		prod = prod + x[i]*theta[i]
+func h(x [][]float64, theta []float64) (out []float64) {
+	l1 := len(x)
+	l2 := len(x[0])
+	for i := 0; i < l1; i++ {
+		prod := 0.0
+		for j := 0; j < l2; j++ {
+			prod = prod + x[i][j]*theta[j]
+		}
+		out = append(out, g(prod))
 	}
-	return g(prod)
+	return
 }
 
 // Cost
 func J(theta []float64, y []float64, X [][]float64) float64 {
 	m := len(y)
-
+	h := h(X, theta)
+	out := 0.00
+	for i := 0; i < m; i++ {
+		out = out + y[i]*math.Log(h[i]) + (1-y[i])*math.Log(1-h[i])
+	}
+	out = -out / float64(m)
+	return out
 }
 
 func TestNelderMead(t *testing.T) {
@@ -59,11 +72,49 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
 		})
 
-		Convey("The minimun ... ", func() {
-			variable := []float64{0, 0, 0}
-			out := neldermead(variable, J)
-			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
-		})
+		Convey("Given the following dataset ...", func() {
+			var X [][]float64
+			var y []float64
+			var data [][]float64
+			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
+			strInfo, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				panic(err)
+			}
 
+			trainingData := strings.Split(string(strInfo), "\n")
+			for _, line := range trainingData {
+				if line == "" {
+					break
+				}
+
+				var values []float64
+				for _, value := range strings.Split(line, " ") {
+					floatVal, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						panic(err)
+					}
+					values = append(values, floatVal)
+				}
+				data = append(data, values)
+			}
+
+			for i := 0; i < len(data); i++ {
+				X = append(X, data[i][:2])
+				y = append(y, data[i][3])
+			}
+
+			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
+				theta := []float64{0, 0, 0}
+				cost := J(theta, y, X)
+				So(cost, ShouldEqual, 0.6931471805599458)
+			})
+
+			Convey("The minimun ... ", func() {
+				//variable := []float64{0, 0, 0}
+				//out := neldermead(variable, J)
+				//So(out, ShouldResemble, []float64{0.5, 1, 1.5})
+			})
+		})
 	})
 }
