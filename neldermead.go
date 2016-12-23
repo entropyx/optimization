@@ -2,6 +2,7 @@ package optimization
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 )
 
@@ -41,13 +42,26 @@ func shrink(x []float64, y []float64, delta float64) (out []float64) {
 	return
 }
 
-func neldermead(variable []float64, fn function) {
-	var p [][]float64
+func around(c []float64, n int) (out [][]float64) {
+	var p []float64
+	radius := 0.1
+	for i := 0; i < n; i++ {
+		degrees := float64(rand.Intn(360))
+		for i := 0; i < len(c); i++ {
+			p = append(p, c[i]+radius*math.Cos(degrees*math.Pi/180.00))
+		}
+		out = append(out, p)
+	}
+	return
+}
+
+func neldermead(variable []float64, fn function, iter int) {
 	n := len(variable)
-	p = append(p, variable)
-	for i := 0; i < n+1; i++ {
-		fmt.Println(rand.Float64())
-		//p = append(p, rand.Float64(0.1))
+	p := append(variable, around(variable, n+1))
+	fmt.Println(p)
+	for i := 0; i < iter; i++ {
+		var f []float64
+
 	}
 
 }
