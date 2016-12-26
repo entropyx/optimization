@@ -152,13 +152,15 @@ func distance(x1, x2 []float64) (dist float64) {
 	return
 }
 
-func neldermead(variables parameter, fn function, iter int) (center []float64, cost float64) {
+func neldermead(variables parameter, fn function) (center []float64, cost float64, iter int) {
 	var z coord
 	var xh, xs, xl, c, xr, xc, xe, xb []float64
 	wse := 1.00
+	iter = 0
 	n := len(variables.theta)
 	p := append(around(variables.theta, n), variables.theta)
 	for wse > 1e-10 {
+		iter++
 		var f []float64
 		for j := 0; j < len(p); j++ {
 			variables.theta = p[j]
