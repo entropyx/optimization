@@ -30,12 +30,12 @@ func h(x [][]float64, theta []float64) (out []float64) {
 }
 
 // Cost
-func J(theta []float64, y []float64, X [][]float64) float64 {
-	m := len(y)
-	h := h(X, theta)
+func J(p parameter) float64 {
+	m := len(p.y)
+	h := h(p.X, p.theta)
 	out := 0.00
 	for i := 0; i < m; i++ {
-		out = out + y[i]*math.Log(h[i]) + (1-y[i])*math.Log(1-h[i])
+		out = out + p.y[i]*math.Log(h[i]) + (1-p.y[i])*math.Log(1-h[i])
 	}
 	out = -out / float64(m)
 	return out
@@ -95,6 +95,24 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldResemble, []float64{2.5, 3.5, 4.5})
 		})
 
+		x = []float64{3, 2.5, 3.5, 1, 4.5}
+		order := order(x, true)
+		Convey("The decreasing order of [3 2.5 3.5 1 4.5] is [5 3 1 2 4]", func() {
+			So(order, ShouldResemble, []int{5, 3, 1, 2, 4})
+		})
+
+		Convey("The decreasing sort of [3 2.5 3.5 1 4.5] is [4.5 3.5 3 2.5 1]", func() {
+			y := [][]float64{
+				[]float64{1, 1, 1},
+				[]float64{2, 2, 2},
+				[]float64{3, 3, 3},
+				[]float64{4, 4, 4},
+				[]float64{5, 5, 5},
+			}
+			sort := sort(y, order)
+			So(sort[0], ShouldResemble, []float64{5, 5, 5})
+		})
+
 		Convey("Given the following dataset ...", func() {
 			var X [][]float64
 			var y []float64
@@ -128,15 +146,22 @@ func TestNelderMead(t *testing.T) {
 			}
 
 			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
-				theta := []float64{0, 0, 0}
-				cost := J(theta, y, X)
+				var data parameter
+				data.theta = []float64{0, 0, 0}
+				data.y = y
+				data.X = X
+				cost := J(data)
 				So(cost, ShouldEqual, 0.6931471805599458)
 			})
 
 			Convey("The minimun ... ", func() {
+				var par parameter
+				par.theta = []float64{0, 0, 0}
+				par.y = y
+				par.X = X
 				//variable := []float64{0, 0, 0}
-				//out := neldermead(variable, J)
-				//So(out, ShouldResemble, []float64{0.5, 1, 1.5})
+				neldermead(par, J, 100)
+				//So(minimun, ShouldResemble, 0.2)*/
 			})
 		})
 	})
