@@ -10,6 +10,10 @@ type parameter struct {
 	X        [][]float64
 }
 
+type coord struct {
+	xr, xs, xl, xe, xc, xh float64
+}
+
 type fn func([]float64) float64
 
 type function func(parameter) float64
@@ -134,7 +138,7 @@ func sort(x [][]float64, by []int) (out [][]float64) {
 }
 
 func neldermead(variables parameter, fn function, iter int) (center []float64, cost float64) {
-	coord := make()
+	var z coord
 	n := len(variables.theta)
 	p := append(around(variables.theta, n+1), variables.theta)
 	for i := 0; i < iter; i++ {
@@ -145,29 +149,41 @@ func neldermead(variables parameter, fn function, iter int) (center []float64, c
 		}
 		order := order(f, true)
 		p = sort(p, order)
-		xh := p[1]
-		xs := p[2]
+		xh := p[0]
+		xs := p[1]
 		xl := p[len(p)-1]
 		c := apply(p[1:], 2, mean)
 		xr := reflection(xh, c, 1)
 		xc := contraction(xh, c, 0.5)
-		if fn(xr) >= fn(xl) && fn(xr) < fn(xs) {
+		variables.theta = xr
+		z.xr = fn(variables)
+		variables.theta = xl
+		z.xl = fn(variables)
+		variables.theta = xs
+		z.xs = fn(variables)
+		variables.theta = xc
+		z.xc = fn(variables)
+		variables.theta = xh
+		z.xh = fn(variables)
+		if z.xr >= z.xl && z.xr < z.xs {
 			p[1] = xr
-		} else if fn(xr) < fn(xl) {
+		} else if z.xr < z.xl {
 			xb := xr
-			gamma := 1
+			gamma := 1.00
 			bool := true
 			for bool == true {
 				gamma++
 				xe := expansion(xr, c, gamma)
-				if fn(xe) > fn(xr) {
+				variables.theta = xe
+				z.xe = fn(variables)
+				if z.xe > z.xr {
 					p[1] = xb
 					bool = false
 				} else {
 					xb = xe
 				}
 			}
-		} else if fn(xr) > fn(xh) && fn(xc) < fn(xh) {
+		} else if z.xr > z.xh && z.xc < z.xh {
 			p[1] = xc
 		} else {
 			for i := 0; i < len(p)-1; i++ {
@@ -176,6 +192,7 @@ func neldermead(variables parameter, fn function, iter int) (center []float64, c
 		}
 	}
 	center = apply(p, 2, mean)
-	cost = fn(c)
+	variables.theta = center
+	cost = fn(variables)
 	return
 }

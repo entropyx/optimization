@@ -1,6 +1,7 @@
 package optimization
 
 import (
+	"fmt"
 	"io/ioutil"
 	"math"
 	"strconv"
@@ -159,9 +160,9 @@ func TestNelderMead(t *testing.T) {
 				par.theta = []float64{0, 0, 0}
 				par.y = y
 				par.X = X
-				//variable := []float64{0, 0, 0}
-				neldermead(par, J, 100)
-				//So(minimun, ShouldResemble, 0.2)*/
+				minimun, cost := neldermead(par, J, 10000)
+				fmt.Println(cost)
+				So(minimun, ShouldResemble, []float64{-20, 0.2, 0.2})
 			})
 		})
 	})
