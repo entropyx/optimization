@@ -54,8 +54,8 @@ func around(c []float64, n int) (out [][]float64) {
 	radius := 0.1
 	for i := 0; i < n; i++ {
 		var p []float64
-		degrees := float64(rand.Intn(360))
 		for i := 0; i < len(c); i++ {
+			degrees := float64(rand.Intn(360))
 			p = append(p, c[i]+radius*math.Cos(degrees*math.Pi/180.00))
 		}
 		out = append(out, p)
@@ -137,24 +137,41 @@ func sort(x [][]float64, by []int) (out [][]float64) {
 	return
 }
 
+func distance(x1, x2 []float64) (dist float64) {
+	l1 := len(x1)
+	l2 := len(x2)
+	s := 0.00
+	if l1 == l2 {
+		for i := 0; i < l1; i++ {
+			s = s + math.Pow(x1[i]-x2[i], 2)
+		}
+		dist = math.Sqrt(s)
+	} else {
+		panic("The vector hasn't the same length!.")
+	}
+	return
+}
+
 func neldermead(variables parameter, fn function, iter int) (center []float64, cost float64) {
 	var z coord
+	var xh, xs, xl, c, xr, xc, xe, xb []float64
+	wse := 1.00
 	n := len(variables.theta)
-	p := append(around(variables.theta, n+1), variables.theta)
-	for i := 0; i < iter; i++ {
+	p := append(around(variables.theta, n), variables.theta)
+	for wse > 1e-10 {
 		var f []float64
-		for i := 0; i < len(p); i++ {
-			variables.theta = p[i]
+		for j := 0; j < len(p); j++ {
+			variables.theta = p[j]
 			f = append(f, fn(variables))
 		}
 		order := order(f, true)
 		p = sort(p, order)
-		xh := p[0]
-		xs := p[1]
-		xl := p[len(p)-1]
-		c := apply(p[1:], 2, mean)
-		xr := reflection(xh, c, 1)
-		xc := contraction(xh, c, 0.5)
+		xh = p[0]
+		xs = p[1]
+		xl = p[len(p)-1]
+		c = apply(p[1:], 2, mean)
+		xr = reflection(xh, c, 1)
+		xc = contraction(xh, c, 0.5)
 		variables.theta = xr
 		z.xr = fn(variables)
 		variables.theta = xl
@@ -166,33 +183,37 @@ func neldermead(variables parameter, fn function, iter int) (center []float64, c
 		variables.theta = xh
 		z.xh = fn(variables)
 		if z.xr >= z.xl && z.xr < z.xs {
-			p[1] = xr
+			p[0] = xr
 		} else if z.xr < z.xl {
-			xb := xr
+			xb = xr
 			gamma := 1.00
 			bool := true
 			for bool == true {
 				gamma++
-				xe := expansion(xr, c, gamma)
+				xe = expansion(xr, c, gamma)
 				variables.theta = xe
 				z.xe = fn(variables)
-				if z.xe > z.xr {
-					p[1] = xb
+				if z.xe >= z.xr {
+					p[0] = xb
 					bool = false
 				} else {
 					xb = xe
 				}
 			}
 		} else if z.xr > z.xh && z.xc < z.xh {
-			p[1] = xc
+			p[0] = xc
 		} else {
-			for i := 0; i < len(p)-1; i++ {
+			for i := 0; i < len(p); i++ {
 				p[i] = shrink(xl, p[i], 0.5)
 			}
 		}
+		center = apply(p, 2, mean)
+		variables.theta = center
+		cost = fn(variables)
+		wse = 0
+		for j := 0; j < len(p); j++ {
+			wse = wse + distance(c, p[j])
+		}
 	}
-	center = apply(p, 2, mean)
-	variables.theta = center
-	cost = fn(variables)
 	return
 }

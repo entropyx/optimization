@@ -114,6 +114,13 @@ func TestNelderMead(t *testing.T) {
 			So(sort[0], ShouldResemble, []float64{5, 5, 5})
 		})
 
+		Convey("The euclidean diastance between [1 1 1] [-1 -1 -1]] is 3.4641016151377544", func() {
+			x := []float64{1, 1, 1}
+			y := []float64{-1, -1, -1}
+			dist := distance(x, y)
+			So(dist, ShouldEqual, 3.4641016151377544)
+		})
+
 		Convey("Given the following dataset ...", func() {
 			var X [][]float64
 			var y []float64
@@ -142,27 +149,25 @@ func TestNelderMead(t *testing.T) {
 			}
 
 			for i := 0; i < len(data); i++ {
-				X = append(X, data[i][:2])
+				X = append(X, data[i][:3])
 				y = append(y, data[i][3])
 			}
 
+			var par parameter
+			par.theta = []float64{0, 0, 0}
+			par.y = y
+			par.X = X
+
 			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
-				var data parameter
-				data.theta = []float64{0, 0, 0}
-				data.y = y
-				data.X = X
-				cost := J(data)
+				cost := J(par)
 				So(cost, ShouldEqual, 0.6931471805599458)
 			})
 
-			Convey("The minimun ... ", func() {
-				var par parameter
-				par.theta = []float64{0, 0, 0}
-				par.y = y
-				par.X = X
-				minimun, cost := neldermead(par, J, 10000)
+			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
+
+				minimun, cost := neldermead(par, J, 300)
 				fmt.Println(cost)
-				So(minimun, ShouldResemble, []float64{-20, 0.2, 0.2})
+				So(minimun, ShouldResemble, []float64{-25.16133355416168, 0.20623171363284806, 0.20147159995083574})
 			})
 		})
 	})
