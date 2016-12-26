@@ -152,69 +152,133 @@ func distance(x1, x2 []float64) (dist float64) {
 	return
 }
 
-func neldermead(variables parameter, fn function) (center []float64, cost float64, iter int) {
+func neldermead(variables parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
 	var z coord
 	var xh, xs, xl, c, xr, xc, xe, xb []float64
 	wse := 1.00
 	iter = 0
 	n := len(variables.theta)
 	p := append(around(variables.theta, n), variables.theta)
-	for wse > 1e-10 {
-		iter++
-		var f []float64
-		for j := 0; j < len(p); j++ {
-			variables.theta = p[j]
-			f = append(f, fn(variables))
-		}
-		order := order(f, true)
-		p = sort(p, order)
-		xh = p[0]
-		xs = p[1]
-		xl = p[len(p)-1]
-		c = apply(p[1:], 2, mean)
-		xr = reflection(xh, c, 1)
-		xc = contraction(xh, c, 0.5)
-		variables.theta = xr
-		z.xr = fn(variables)
-		variables.theta = xl
-		z.xl = fn(variables)
-		variables.theta = xs
-		z.xs = fn(variables)
-		variables.theta = xc
-		z.xc = fn(variables)
-		variables.theta = xh
-		z.xh = fn(variables)
-		if z.xr >= z.xl && z.xr < z.xs {
-			p[0] = xr
-		} else if z.xr < z.xl {
-			xb = xr
-			gamma := 1.00
-			bool := true
-			for bool == true {
-				gamma++
-				xe = expansion(xr, c, gamma)
-				variables.theta = xe
-				z.xe = fn(variables)
-				if z.xe >= z.xr {
-					p[0] = xb
-					bool = false
-				} else {
-					xb = xe
+	switch minimize {
+	// Minimize
+	case true:
+		for wse > 1e-10 {
+			iter++
+			var f []float64
+			for j := 0; j < len(p); j++ {
+				variables.theta = p[j]
+				f = append(f, fn(variables))
+			}
+			order := order(f, true)
+			p = sort(p, order)
+			xh = p[0]
+			xs = p[1]
+			xl = p[len(p)-1]
+			c = apply(p[1:], 2, mean)
+			xr = reflection(xh, c, 1)
+			xc = contraction(xh, c, 0.5)
+			variables.theta = xr
+			z.xr = fn(variables)
+			variables.theta = xl
+			z.xl = fn(variables)
+			variables.theta = xs
+			z.xs = fn(variables)
+			variables.theta = xc
+			z.xc = fn(variables)
+			variables.theta = xh
+			z.xh = fn(variables)
+			if z.xr >= z.xl && z.xr < z.xs {
+				p[0] = xr
+			} else if z.xr < z.xl {
+				xb = xr
+				gamma := 1.00
+				bool := true
+				for bool == true {
+					gamma++
+					xe = expansion(xr, c, gamma)
+					variables.theta = xe
+					z.xe = fn(variables)
+					if z.xe >= z.xr {
+						p[0] = xb
+						bool = false
+					} else {
+						xb = xe
+					}
+				}
+			} else if z.xr > z.xh && z.xc < z.xh {
+				p[0] = xc
+			} else {
+				for i := 0; i < len(p); i++ {
+					p[i] = shrink(xl, p[i], 0.5)
 				}
 			}
-		} else if z.xr > z.xh && z.xc < z.xh {
-			p[0] = xc
-		} else {
-			for i := 0; i < len(p); i++ {
-				p[i] = shrink(xl, p[i], 0.5)
+			center = apply(p, 2, mean)
+			variables.theta = center
+			cost = fn(variables)
+			wse = 0
+			for j := 0; j < len(p); j++ {
+				wse = wse + distance(c, p[j])
 			}
 		}
-		center = apply(p, 2, mean)
-		variables.theta = center
-		cost = fn(variables)
-		wse = 0
-		for j := 0; j < len(p); j++ {
-			wse = wse + distance(c, p[j])
+		// Maximize
+	case false:
+		for wse > 1e-10 {
+			iter++
+			var f []float64
+			for j := 0; j < len(p); j++ {
+				variables.theta = p[j]
+				f = append(f, fn(variables))
+			}
+			order := order(f, false)
+			p = sort(p, order)
+			xl = p[0]
+			xs = p[1]
+			xh = p[len(p)-1]
+			c = apply(p[1:], 2, mean)
+			xr = reflection(xl, c, 1)
+			xc = contraction(xl, c, 0.5)
+			variables.theta = xr
+			z.xr = fn(variables)
+			variables.theta = xh
+			z.xh = fn(variables)
+			variables.theta = xs
+			z.xs = fn(variables)
+			variables.theta = xc
+			z.xc = fn(variables)
+			variables.theta = xl
+			z.xl = fn(variables)
+			if z.xr <= z.xh && z.xr > z.xs {
+				p[0] = xr
+			} else if z.xr > z.xh {
+				xb = xr
+				gamma := 1.00
+				bool := true
+				for bool == true {
+					gamma++
+					xe = expansion(xr, c, gamma)
+					variables.theta = xe
+					z.xe = fn(variables)
+					if z.xe <= z.xr {
+						p[0] = xb
+						bool = false
+					} else {
+						xb = xe
+					}
+				}
+			} else if z.xr < z.xl && z.xc > z.xl {
+				p[0] = xc
+			} else {
+				for i := 0; i < len(p); i++ {
+					p[i] = shrink(xh, p[i], 0.5)
+				}
+			}
+			center = apply(p, 2, mean)
+			variables.theta = center
+			cost = fn(variables)
+			wse = 0
+			for j := 0; j < len(p); j++ {
+				wse = wse + distance(c, p[j])
+			}
 		}
 	}
 	return
