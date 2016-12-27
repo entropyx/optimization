@@ -6,8 +6,9 @@ import (
 )
 
 type parameter struct {
-	theta, y []float64
-	X        [][]float64
+	y     []int
+	theta []float64
+	X     [][]float64
 }
 
 type coord struct {

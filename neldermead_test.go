@@ -36,7 +36,7 @@ func J(p parameter) float64 {
 	h := h(p.X, p.theta)
 	out := 0.00
 	for i := 0; i < m; i++ {
-		out = out + p.y[i]*math.Log(h[i]) + (1-p.y[i])*math.Log(1-h[i])
+		out = out + float64(p.y[i])*math.Log(h[i]) + (1-float64(p.y[i]))*math.Log(1-h[i])
 	}
 	out = -out / float64(m)
 	return out
@@ -123,7 +123,7 @@ func TestNelderMead(t *testing.T) {
 
 		Convey("Given the following dataset ...", func() {
 			var X [][]float64
-			var y []float64
+			var y []int
 			var data [][]float64
 			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
 			strInfo, err := ioutil.ReadFile(filePath)
@@ -150,7 +150,7 @@ func TestNelderMead(t *testing.T) {
 
 			for i := 0; i < len(data); i++ {
 				X = append(X, data[i][:3])
-				y = append(y, data[i][3])
+				y = append(y, int(data[i][3]))
 			}
 
 			var par parameter
