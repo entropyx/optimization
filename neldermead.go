@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-type parameter struct {
+type Parameter struct {
 	y     []int
 	theta []float64
 	X     [][]float64
@@ -153,7 +153,8 @@ func distance(x1, x2 []float64) (dist float64) {
 	return
 }
 
-func neldermead(variables parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
+// Neldermead maximize o minimize
+func Neldermead(variables parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
 	var z coord
 	var xh, xs, xl, c, xr, xc, xe, xb []float64
 	wse := 1.00
