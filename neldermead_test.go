@@ -31,12 +31,12 @@ func h(x [][]float64, theta []float64) (out []float64) {
 }
 
 // Cost
-func J(p parameter) float64 {
-	m := len(p.y)
-	h := h(p.X, p.theta)
+func J(p Parameter) float64 {
+	m := len(p.Y)
+	h := h(p.X, p.Theta)
 	out := 0.00
 	for i := 0; i < m; i++ {
-		out = out + float64(p.y[i])*math.Log(h[i]) + (1-float64(p.y[i]))*math.Log(1-h[i])
+		out = out + float64(p.Y[i])*math.Log(h[i]) + (1-float64(p.Y[i]))*math.Log(1-h[i])
 	}
 	out = -out / float64(m)
 	return out
@@ -153,9 +153,9 @@ func TestNelderMead(t *testing.T) {
 				y = append(y, int(data[i][3]))
 			}
 
-			var par parameter
-			par.theta = []float64{0, 0, 0}
-			par.y = y
+			var par Parameter
+			par.Theta = []float64{0, 0, 0}
+			par.Y = y
 			par.X = X
 
 			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
@@ -164,7 +164,7 @@ func TestNelderMead(t *testing.T) {
 			})
 
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
-				minimun, cost, iter := neldermead(par, J, true)
+				minimun, cost, iter := Neldermead(par, J, true)
 				fmt.Printf("Cost: %v, Iter: %v \n", cost, iter)
 				So(minimun, ShouldResemble, []float64{-25.16133355416168, 0.20623171363284806, 0.20147159995083574})
 			})

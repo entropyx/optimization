@@ -6,8 +6,8 @@ import (
 )
 
 type Parameter struct {
-	y     []int
-	theta []float64
+	Y     []int
+	Theta []float64
 	X     [][]float64
 }
 
@@ -17,7 +17,7 @@ type coord struct {
 
 type fn func([]float64) float64
 
-type function func(parameter) float64
+type function func(Parameter) float64
 
 func reflection(x []float64, c []float64, alpha float64) (out []float64) {
 	l := len(x)
@@ -154,13 +154,13 @@ func distance(x1, x2 []float64) (dist float64) {
 }
 
 // Neldermead maximize o minimize
-func Neldermead(variables parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
+func Neldermead(variables Parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
 	var z coord
 	var xh, xs, xl, c, xr, xc, xe, xb []float64
 	wse := 1.00
 	iter = 0
-	n := len(variables.theta)
-	p := append(around(variables.theta, n), variables.theta)
+	n := len(variables.Theta)
+	p := append(around(variables.Theta, n), variables.Theta)
 	switch minimize {
 	// Minimize
 	case true:
@@ -168,7 +168,7 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 			iter++
 			var f []float64
 			for j := 0; j < len(p); j++ {
-				variables.theta = p[j]
+				variables.Theta = p[j]
 				f = append(f, fn(variables))
 			}
 			order := order(f, true)
@@ -179,15 +179,15 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 			c = apply(p[1:], 2, mean)
 			xr = reflection(xh, c, 1)
 			xc = contraction(xh, c, 0.5)
-			variables.theta = xr
+			variables.Theta = xr
 			z.xr = fn(variables)
-			variables.theta = xl
+			variables.Theta = xl
 			z.xl = fn(variables)
-			variables.theta = xs
+			variables.Theta = xs
 			z.xs = fn(variables)
-			variables.theta = xc
+			variables.Theta = xc
 			z.xc = fn(variables)
-			variables.theta = xh
+			variables.Theta = xh
 			z.xh = fn(variables)
 			if z.xr >= z.xl && z.xr < z.xs {
 				p[0] = xr
@@ -198,7 +198,7 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 				for bool == true {
 					gamma++
 					xe = expansion(xr, c, gamma)
-					variables.theta = xe
+					variables.Theta = xe
 					z.xe = fn(variables)
 					if z.xe >= z.xr {
 						p[0] = xb
@@ -215,7 +215,7 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 				}
 			}
 			center = apply(p, 2, mean)
-			variables.theta = center
+			variables.Theta = center
 			cost = fn(variables)
 			wse = 0
 			for j := 0; j < len(p); j++ {
@@ -228,7 +228,7 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 			iter++
 			var f []float64
 			for j := 0; j < len(p); j++ {
-				variables.theta = p[j]
+				variables.Theta = p[j]
 				f = append(f, fn(variables))
 			}
 			order := order(f, false)
@@ -239,15 +239,15 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 			c = apply(p[1:], 2, mean)
 			xr = reflection(xl, c, 1)
 			xc = contraction(xl, c, 0.5)
-			variables.theta = xr
+			variables.Theta = xr
 			z.xr = fn(variables)
-			variables.theta = xh
+			variables.Theta = xh
 			z.xh = fn(variables)
-			variables.theta = xs
+			variables.Theta = xs
 			z.xs = fn(variables)
-			variables.theta = xc
+			variables.Theta = xc
 			z.xc = fn(variables)
-			variables.theta = xl
+			variables.Theta = xl
 			z.xl = fn(variables)
 			if z.xr <= z.xh && z.xr > z.xs {
 				p[0] = xr
@@ -258,7 +258,7 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 				for bool == true {
 					gamma++
 					xe = expansion(xr, c, gamma)
-					variables.theta = xe
+					variables.Theta = xe
 					z.xe = fn(variables)
 					if z.xe <= z.xr {
 						p[0] = xb
@@ -275,7 +275,7 @@ func Neldermead(variables parameter, fn function, minimize bool) (center []float
 				}
 			}
 			center = apply(p, 2, mean)
-			variables.theta = center
+			variables.Theta = center
 			cost = fn(variables)
 			wse = 0
 			for j := 0; j < len(p); j++ {
