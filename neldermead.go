@@ -52,7 +52,7 @@ func shrink(x []float64, y []float64, delta float64) (out []float64) {
 }
 
 func around(c []float64, n int) (out [][]float64) {
-	radius := 0.1
+	radius := 5.00
 	for i := 0; i < n; i++ {
 		var p []float64
 		for i := 0; i < len(c); i++ {
