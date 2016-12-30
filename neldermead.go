@@ -5,6 +5,7 @@ import (
 	"math"
 )
 
+// Parameter of J
 type Parameter struct {
 	Variable []float64
 	Y        []int
@@ -12,7 +13,7 @@ type Parameter struct {
 }
 
 type coord struct {
-	xr, xs, xl, xe, xci, xco, xh, xb float64
+	xr, xs, xl, xe, xci, xco, xh float64
 }
 
 type fn func([]float64) float64
@@ -159,7 +160,7 @@ func distance(x1, x2 []float64) (dist float64) {
 // Neldermead maximize o minimize
 func Neldermead(Variable string, parameter Parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
 	var z coord
-	var xh, xs, xl, c, xr, xci, xco, xe, xb []float64
+	var xh, xl, c, xr, xci, xco, xe []float64
 	wse := 1.00
 	iter = 0
 	n := len(parameter.Variable)
@@ -182,7 +183,6 @@ func Neldermead(Variable string, parameter Parameter, fn function, minimize bool
 			order := order(f, true)
 			p = sort(p, order)
 			xh = p[0]
-			xs = p[1]
 			xl = p[len(p)-1]
 			c = apply(p[1:], 2, mean)
 			xr = reflection(xh, c, 1)
@@ -235,8 +235,9 @@ func Neldermead(Variable string, parameter Parameter, fn function, minimize bool
 		}
 		// Maximize
 	case false:
-		for wse > 1e-10 {
+		for wse > 1e-3 {
 			iter++
+			fmt.Printf("Iter %v \n", iter)
 			var f []float64
 			for j := 0; j < len(p); j++ {
 				parameter.Variable = p[j]
@@ -245,52 +246,52 @@ func Neldermead(Variable string, parameter Parameter, fn function, minimize bool
 			order := order(f, false)
 			p = sort(p, order)
 			xl = p[0]
-			xs = p[1]
 			xh = p[len(p)-1]
 			c = apply(p[1:], 2, mean)
 			xr = reflection(xl, c, 1)
-			xci, xco = contraction(xl, c, 0.5)
+			xci, xco = contraction(xl, c, beta)
 			parameter.Variable = xr
 			z.xr = fn(parameter)
-			parameter.Variable = xh
-			z.xh = fn(parameter)
-			parameter.Variable = xs
-			z.xs = fn(parameter)
 			parameter.Variable = xci
 			z.xci = fn(parameter)
 			parameter.Variable = xco
 			z.xco = fn(parameter)
-			parameter.Variable = xl
-			z.xl = fn(parameter)
+			z.xh = f[len(f)-1]
+			z.xs = f[1]
+			z.xl = f[0]
 			if z.xr <= z.xh && z.xr > z.xs {
+				fmt.Println("Reflect")
 				p[0] = xr
 			} else if z.xr > z.xh {
-				xb = xr
-				gamma := 1.00
-				bool := true
-				for bool == true {
-					gamma++
-					xe = expansion(xr, c, gamma)
-					parameter.Variable = xe
-					z.xe = fn(parameter)
-					if z.xe <= z.xr {
-						p[0] = xb
-						bool = false
-					} else {
-						xb = xe
-					}
+				p[0] = xr
+				xe = expansion(xr, c, gamma)
+				parameter.Variable = xe
+				z.xe = fn(parameter)
+				fmt.Printf("f(xe) = %v \n", z.xe)
+				if z.xe > z.xr {
+					fmt.Println("Expand")
+					p[0] = xe
 				}
-			} else if z.xr < z.xl && z.xci > z.xl {
-				p[0] = xci
+			} else if z.xci > z.xl || z.xco > z.xl {
+				if z.xci > z.xco {
+					fmt.Println("Contract inside")
+					p[0] = xci
+				} else {
+					fmt.Println("Contract outside")
+					p[0] = xco
+				}
 			} else {
+				fmt.Println("Shrink")
 				for i := 0; i < len(p)-1; i++ {
-					p[i] = shrink(xh, p[i], 0.5)
+					p[i] = shrink(xh, p[i], delta)
 				}
 			}
-			center = apply(p, 2, mean)
+			center = xh
 			parameter.Variable = center
 			cost = fn(parameter)
+			fmt.Println(center, cost)
 			wse = 0
+			c = apply(p, 2, mean)
 			for j := 0; j < len(p); j++ {
 				wse = wse + distance(c, p[j])
 			}
