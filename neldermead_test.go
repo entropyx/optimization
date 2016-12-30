@@ -63,8 +63,8 @@ func TestNelderMead(t *testing.T) {
 
 		Convey("The contraction of [1 2 3] is [0.5,1,1.5]", func() {
 			beta := 0.5
-			out := contraction(x, c, beta)
-			So(out, ShouldResemble, []float64{0.5, 1, 1.5})
+			ci, _ := contraction(x, c, beta)
+			So(ci, ShouldResemble, []float64{0.5, 1, 1.5})
 		})
 
 		Convey("The shrink of [1 2 3] respect to [0,0,0] is [0.5,1,1.5]", func() {
@@ -154,7 +154,7 @@ func TestNelderMead(t *testing.T) {
 			}
 
 			var par Parameter
-			par.Theta = []float64{0, 0, 0}
+			par.Variable = []float64{0, 0, 0}
 			par.Y = y
 			par.X = X
 
@@ -164,9 +164,9 @@ func TestNelderMead(t *testing.T) {
 			})
 
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
-				minimun, cost, iter := Neldermead(par, J, true)
+				minimun, cost, iter := Neldermead("Theta", par, J, true)
 				fmt.Printf("Cost: %v, Iter: %v \n", cost, iter)
-				So(minimun, ShouldResemble, []float64{-25.16126305643359, 0.20623111353688023, 0.20147102535071565})
+				So(minimun, ShouldResemble, []float64{-25.161440979349845, 0.206233587739179, 0.20147115062868437})
 			})
 		})
 	})
