@@ -6,17 +6,6 @@ import (
 	"reflect"
 )
 
-// eval generic function
-func eval(f, v interface{}) float64 {
-	fn := reflect.ValueOf(f)
-	fnType := fn.Type()
-	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
-		panic("Expected a unary function returning a single value")
-	}
-	res := fn.Call([]reflect.Value{reflect.ValueOf(v)})
-	return res[0].Float()
-}
-
 type coord struct {
 	xr, xs, xl, xe, xci, xco, xh float64
 }
@@ -80,11 +69,18 @@ func mean(x []float64) float64 {
 }
 
 func apply(X [][]float64, n int, f interface{}) (out []float64) {
+
+	fn := reflect.ValueOf(f)
+	fnType := fn.Type()
+	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
+		panic("Expected a unary function returning a single value")
+	}
+
 	switch {
 	// apply by row
 	case n == 1:
 		for i := 0; i < len(X); i++ {
-			out = append(out, eval(f, X[i]))
+			out = append(out, fn.Call([]reflect.Value{reflect.ValueOf(X[i])})[0].Float())
 		}
 		// apply by column
 	case n == 2:
@@ -97,7 +93,7 @@ func apply(X [][]float64, n int, f interface{}) (out []float64) {
 			t = append(t, column)
 		}
 		for i := 0; i < len(t); i++ {
-			out = append(out, eval(f, t[i]))
+			out = append(out, fn.Call([]reflect.Value{reflect.ValueOf(t[i])})[0].Float())
 		}
 	case n > 2 || n < 1:
 		panic("n must be 1 or 2!.")

@@ -81,11 +81,6 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldEqual, 2)
 		})
 
-		Convey("The eval of mean and [1 2 3] is 2", func() {
-			out := eval(mean, x)
-			So(out, ShouldEqual, 2)
-		})
-
 		Convey("The mean of each raw of [[1 2 3] [4 5 6]] is [2 5]", func() {
 			x := [][]float64{
 				[]float64{1, 2, 3},
@@ -164,11 +159,6 @@ func TestNelderMead(t *testing.T) {
 			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
 				cost := J(theta)
 				So(cost, ShouldEqual, 0.6931471805599458)
-			})
-
-			Convey("The eval of J, X, y and theta ", func() {
-				out := eval(J, theta)
-				So(out, ShouldEqual, 0.6931471805599465)
 			})
 
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
