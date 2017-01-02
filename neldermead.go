@@ -3,22 +3,23 @@ package optimization
 import (
 	"fmt"
 	"math"
+	"reflect"
 )
 
-// Parameter of J
-type Parameter struct {
-	Variable []float64
-	Y        []int
-	X        [][]float64
+// eval generic function
+func eval(f, v interface{}) float64 {
+	fn := reflect.ValueOf(f)
+	fnType := fn.Type()
+	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
+		panic("Expected a unary function returning a single value")
+	}
+	res := fn.Call([]reflect.Value{reflect.ValueOf(v)})
+	return res[0].Float()
 }
 
 type coord struct {
 	xr, xs, xl, xe, xci, xco, xh float64
 }
-
-type fn func([]float64) float64
-
-type function func(Parameter) float64
 
 func reflection(x []float64, c []float64, alpha float64) (out []float64) {
 	l := len(x)
@@ -78,12 +79,12 @@ func mean(x []float64) float64 {
 	return out
 }
 
-func apply(X [][]float64, n int, f fn) (out []float64) {
+func apply(X [][]float64, n int, f interface{}) (out []float64) {
 	switch {
 	// apply by row
 	case n == 1:
 		for i := 0; i < len(X); i++ {
-			out = append(out, f(X[i]))
+			out = append(out, eval(f, X[i]))
 		}
 		// apply by column
 	case n == 2:
@@ -96,7 +97,7 @@ func apply(X [][]float64, n int, f fn) (out []float64) {
 			t = append(t, column)
 		}
 		for i := 0; i < len(t); i++ {
-			out = append(out, f(t[i]))
+			out = append(out, eval(f, t[i]))
 		}
 	case n > 2 || n < 1:
 		panic("n must be 1 or 2!.")
@@ -157,145 +158,166 @@ func distance(x1, x2 []float64) (dist float64) {
 	return
 }
 
-// Neldermead maximize o minimize
-func Neldermead(Variable string, parameter Parameter, fn function, minimize bool) (center []float64, cost float64, iter int) {
-	var z coord
+func minimize(fn interface{}, p [][]float64) (center []float64, height float64, iter int) {
 	var xh, xl, c, xr, xci, xco, xe []float64
-	wse := 1.00
-	iter = 0
-	n := len(parameter.Variable)
+	var z coord
+	n := len(p[0])
 	beta := 0.75 - 1/(2*float64(n))
 	gamma := 2.0 + 2.0/float64(n)
 	delta := 1.0 - 1/float64(n)
-	p := around(parameter.Variable, n)
-	p = append(p, parameter.Variable)
-	switch minimize {
+	wse := 1.00
+	iter = 0
+
+	f := reflect.ValueOf(fn)
+	fnType := f.Type()
+	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
+		panic("Expected a unary function returning a single value")
+	}
+
+	for wse > 1e-3 {
+		iter++
+		fmt.Printf("Iter %v \n", iter)
+		var f2 []float64
+		for j := 0; j < len(p); j++ {
+			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
+		}
+		order := order(f2, true)
+		p = sort(p, order)
+		xh = p[0]
+		xl = p[len(p)-1]
+		c = apply(p[1:], 2, mean)
+		xr = reflection(xh, c, 1)
+		xci, xco = contraction(xh, c, beta)
+		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
+		z.xci = f.Call([]reflect.Value{reflect.ValueOf(xci)})[0].Float()
+		z.xco = f.Call([]reflect.Value{reflect.ValueOf(xco)})[0].Float()
+		z.xl = f2[len(f2)-1]
+		z.xs = f2[1]
+		z.xh = f2[0]
+		if z.xr >= z.xl && z.xr < z.xs {
+			fmt.Println("Reflect")
+			p[0] = xr
+		} else if z.xr < z.xl {
+			p[0] = xr
+			xe = expansion(xr, c, gamma)
+			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
+			fmt.Printf("f(xe) = %v \n", z.xe)
+			if z.xe < z.xr {
+				fmt.Println("Expand")
+				p[0] = xe
+			}
+		} else if z.xci < z.xh || z.xco < z.xh {
+			if z.xci < z.xco {
+				fmt.Println("Contract inside")
+				p[0] = xci
+			} else {
+				fmt.Println("Contract outside")
+				p[0] = xco
+			}
+		} else {
+			fmt.Println("Shrink")
+			for i := 0; i < len(p)-1; i++ {
+				p[i] = shrink(xl, p[i], delta)
+			}
+		}
+		center = xl
+		height = f.Call([]reflect.Value{reflect.ValueOf(xl)})[0].Float()
+		fmt.Println(center, height)
+		wse = 0
+		c = apply(p, 2, mean)
+		for j := 0; j < len(p); j++ {
+			wse = wse + distance(c, p[j])
+		}
+	}
+	return
+}
+
+func maximize(fn interface{}, p [][]float64) (center []float64, height float64, iter int) {
+	var xh, xl, c, xr, xci, xco, xe []float64
+	var z coord
+	n := len(p[0])
+	beta := 0.75 - 1/(2*float64(n))
+	gamma := 2.0 + 2.0/float64(n)
+	delta := 1.0 - 1/float64(n)
+	wse := 1.00
+	iter = 0
+
+	f := reflect.ValueOf(fn)
+	fnType := f.Type()
+	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
+		panic("Expected a unary function returning a single value")
+	}
+
+	for wse > 1e-3 {
+		iter++
+		fmt.Printf("Iter %v \n", iter)
+		var f2 []float64
+		for j := 0; j < len(p); j++ {
+			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
+		}
+		order := order(f2, false)
+		p = sort(p, order)
+		xl = p[0]
+		xh = p[len(p)-1]
+		c = apply(p[1:], 2, mean)
+		xr = reflection(xl, c, 1)
+		xci, xco = contraction(xl, c, beta)
+		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
+		z.xci = f.Call([]reflect.Value{reflect.ValueOf(xci)})[0].Float()
+		z.xco = f.Call([]reflect.Value{reflect.ValueOf(xco)})[0].Float()
+		z.xh = f2[len(f2)-1]
+		z.xs = f2[1]
+		z.xl = f2[0]
+		if z.xr <= z.xh && z.xr > z.xs {
+			fmt.Println("Reflect")
+			p[0] = xr
+		} else if z.xr > z.xh {
+			p[0] = xr
+			xe = expansion(xr, c, gamma)
+			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
+			fmt.Printf("f(xe) = %v \n", z.xe)
+			if z.xe > z.xr {
+				fmt.Println("Expand")
+				p[0] = xe
+			}
+		} else if z.xci > z.xl || z.xco > z.xl {
+			if z.xci > z.xco {
+				fmt.Println("Contract inside")
+				p[0] = xci
+			} else {
+				fmt.Println("Contract outside")
+				p[0] = xco
+			}
+		} else {
+			fmt.Println("Shrink")
+			for i := 0; i < len(p)-1; i++ {
+				p[i] = shrink(xh, p[i], delta)
+			}
+		}
+		center = xh
+		height = f.Call([]reflect.Value{reflect.ValueOf(xh)})[0].Float()
+		fmt.Println(center, height)
+		wse = 0
+		c = apply(p, 2, mean)
+		for j := 0; j < len(p); j++ {
+			wse = wse + distance(c, p[j])
+		}
+	}
+	return
+}
+
+// Neldermead maximize o minimize
+func Neldermead(par []float64, fn interface{}, minimum bool) (center []float64, height float64, iter int) {
+	n := len(par)
+	p := around(par, n)
+	p = append(p, par)
+	switch minimum {
 	// Minimize
 	case true:
-		for wse > 1e-3 {
-			iter++
-			fmt.Printf("Iter %v \n", iter)
-			var f []float64
-			for j := 0; j < len(p); j++ {
-				parameter.Variable = p[j]
-				f = append(f, fn(parameter))
-			}
-			order := order(f, true)
-			p = sort(p, order)
-			xh = p[0]
-			xl = p[len(p)-1]
-			c = apply(p[1:], 2, mean)
-			xr = reflection(xh, c, 1)
-			xci, xco = contraction(xh, c, beta)
-			parameter.Variable = xr
-			z.xr = fn(parameter)
-			parameter.Variable = xci
-			z.xci = fn(parameter)
-			parameter.Variable = xco
-			z.xco = fn(parameter)
-			z.xl = f[len(f)-1]
-			z.xs = f[1]
-			z.xh = f[0]
-			if z.xr >= z.xl && z.xr < z.xs {
-				fmt.Println("Reflect")
-				p[0] = xr
-			} else if z.xr < z.xl {
-				p[0] = xr
-				xe = expansion(xr, c, gamma)
-				parameter.Variable = xe
-				z.xe = fn(parameter)
-				fmt.Printf("f(xe) = %v \n", z.xe)
-				if z.xe < z.xr {
-					fmt.Println("Expand")
-					p[0] = xe
-				}
-			} else if z.xci < z.xh || z.xco < z.xh {
-				if z.xci < z.xco {
-					fmt.Println("Contract inside")
-					p[0] = xci
-				} else {
-					fmt.Println("Contract outside")
-					p[0] = xco
-				}
-			} else {
-				fmt.Println("Shrink")
-				for i := 0; i < len(p)-1; i++ {
-					p[i] = shrink(xl, p[i], delta)
-				}
-			}
-			center = xl
-			parameter.Variable = center
-			cost = fn(parameter)
-			fmt.Println(center, cost)
-			wse = 0
-			c = apply(p, 2, mean)
-			for j := 0; j < len(p); j++ {
-				wse = wse + distance(c, p[j])
-			}
-		}
+		center, height, iter = minimize(fn, p)
 		// Maximize
 	case false:
-		for wse > 1e-3 {
-			iter++
-			fmt.Printf("Iter %v \n", iter)
-			var f []float64
-			for j := 0; j < len(p); j++ {
-				parameter.Variable = p[j]
-				f = append(f, fn(parameter))
-			}
-			order := order(f, false)
-			p = sort(p, order)
-			xl = p[0]
-			xh = p[len(p)-1]
-			c = apply(p[1:], 2, mean)
-			xr = reflection(xl, c, 1)
-			xci, xco = contraction(xl, c, beta)
-			parameter.Variable = xr
-			z.xr = fn(parameter)
-			parameter.Variable = xci
-			z.xci = fn(parameter)
-			parameter.Variable = xco
-			z.xco = fn(parameter)
-			z.xh = f[len(f)-1]
-			z.xs = f[1]
-			z.xl = f[0]
-			if z.xr <= z.xh && z.xr > z.xs {
-				fmt.Println("Reflect")
-				p[0] = xr
-			} else if z.xr > z.xh {
-				p[0] = xr
-				xe = expansion(xr, c, gamma)
-				parameter.Variable = xe
-				z.xe = fn(parameter)
-				fmt.Printf("f(xe) = %v \n", z.xe)
-				if z.xe > z.xr {
-					fmt.Println("Expand")
-					p[0] = xe
-				}
-			} else if z.xci > z.xl || z.xco > z.xl {
-				if z.xci > z.xco {
-					fmt.Println("Contract inside")
-					p[0] = xci
-				} else {
-					fmt.Println("Contract outside")
-					p[0] = xco
-				}
-			} else {
-				fmt.Println("Shrink")
-				for i := 0; i < len(p)-1; i++ {
-					p[i] = shrink(xh, p[i], delta)
-				}
-			}
-			center = xh
-			parameter.Variable = center
-			cost = fn(parameter)
-			fmt.Println(center, cost)
-			wse = 0
-			c = apply(p, 2, mean)
-			for j := 0; j < len(p); j++ {
-				wse = wse + distance(c, p[j])
-			}
-		}
+		center, height, iter = maximize(fn, p)
 	}
 	return
 }

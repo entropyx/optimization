@@ -30,13 +30,16 @@ func h(x [][]float64, theta []float64) (out []float64) {
 	return
 }
 
+var y []int
+var X [][]float64
+
 // Cost
-func J(p Parameter) float64 {
-	m := len(p.Y)
-	h := h(p.X, p.Variable)
+func J(theta []float64) float64 {
+	m := len(y)
+	h := h(X, theta)
 	out := 0.00
 	for i := 0; i < m; i++ {
-		out = out + float64(p.Y[i])*math.Log(h[i]) + (1-float64(p.Y[i]))*math.Log(1-h[i])
+		out = out + float64(y[i])*math.Log(h[i]) + (1-float64(y[i]))*math.Log(1-h[i])
 	}
 	out = -out / float64(m)
 	return out
@@ -75,6 +78,11 @@ func TestNelderMead(t *testing.T) {
 
 		Convey("The mean of [1 2 3] is 2", func() {
 			out := mean(x)
+			So(out, ShouldEqual, 2)
+		})
+
+		Convey("The eval of mean and [1 2 3] is 2", func() {
+			out := eval(mean, x)
 			So(out, ShouldEqual, 2)
 		})
 
@@ -122,8 +130,6 @@ func TestNelderMead(t *testing.T) {
 		})
 
 		Convey("Given the following dataset ...", func() {
-			var X [][]float64
-			var y []int
 			var data [][]float64
 			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
 			strInfo, err := ioutil.ReadFile(filePath)
@@ -153,18 +159,20 @@ func TestNelderMead(t *testing.T) {
 				y = append(y, int(data[i][3]))
 			}
 
-			var par Parameter
-			par.Variable = []float64{0, 0, 0}
-			par.Y = y
-			par.X = X
+			theta := []float64{0, 0, 0}
 
 			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
-				cost := J(par)
+				cost := J(theta)
 				So(cost, ShouldEqual, 0.6931471805599458)
 			})
 
+			Convey("The eval of J, X, y and theta ", func() {
+				out := eval(J, theta)
+				So(out, ShouldEqual, 0.6931471805599465)
+			})
+
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
-				minimun, cost, iter := Neldermead("Theta", par, J, true)
+				minimun, cost, iter := Neldermead(theta, J, true)
 				fmt.Printf("Cost: %v, Iter: %v \n", cost, iter)
 				So(minimun, ShouldResemble, []float64{-25.160920349329682, 0.20622792851376404, 0.201468441137889})
 			})
