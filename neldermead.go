@@ -2,8 +2,9 @@ package optimization
 
 import (
 	"fmt"
-	"math"
 	"reflect"
+
+	"github.com/entropyx/tools"
 )
 
 type coord struct {
@@ -68,92 +69,6 @@ func mean(x []float64) float64 {
 	return out
 }
 
-func apply(X [][]float64, n int, f interface{}) (out []float64) {
-
-	fn := reflect.ValueOf(f)
-	fnType := fn.Type()
-	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
-		panic("Expected a unary function returning a single value")
-	}
-
-	switch {
-	// apply by row
-	case n == 1:
-		for i := 0; i < len(X); i++ {
-			out = append(out, fn.Call([]reflect.Value{reflect.ValueOf(X[i])})[0].Float())
-		}
-		// apply by column
-	case n == 2:
-		var t [][]float64
-		for i := 0; i < len(X[0]); i++ {
-			var column []float64
-			for j := 0; j < len(X); j++ {
-				column = append(column, X[j][i])
-			}
-			t = append(t, column)
-		}
-		for i := 0; i < len(t); i++ {
-			out = append(out, fn.Call([]reflect.Value{reflect.ValueOf(t[i])})[0].Float())
-		}
-	case n > 2 || n < 1:
-		panic("n must be 1 or 2!.")
-	}
-	return out
-}
-
-func order(x []float64, decreasing bool) (out []int) {
-	l := len(x)
-	k := 0
-	for i := 0; i < l; i++ {
-		out = append(out, i+1)
-	}
-	switch decreasing {
-	case true:
-		for k < l-1 {
-			if x[k] < x[k+1] {
-				x[k], x[k+1] = x[k+1], x[k]
-				out[k], out[k+1] = out[k+1], out[k]
-				k = 0
-			} else {
-				k++
-			}
-		}
-	case false:
-		for k < l-1 {
-			if x[k] > x[k+1] {
-				x[k], x[k+1] = x[k+1], x[k]
-				out[k], out[k+1] = out[k+1], out[k]
-				k = 0
-			} else {
-				k++
-			}
-		}
-	}
-	return
-}
-
-func sort(x [][]float64, by []int) (out [][]float64) {
-	for _, i := range by {
-		out = append(out, x[i-1])
-	}
-	return
-}
-
-func distance(x1, x2 []float64) (dist float64) {
-	l1 := len(x1)
-	l2 := len(x2)
-	s := 0.00
-	if l1 == l2 {
-		for i := 0; i < l1; i++ {
-			s = s + math.Pow(x1[i]-x2[i], 2)
-		}
-		dist = math.Sqrt(s)
-	} else {
-		panic("The vector hasn't the same length!.")
-	}
-	return
-}
-
 func minimize(fn interface{}, p [][]float64) (center []float64, height float64, iter int) {
 	var xh, xl, c, xr, xci, xco, xe []float64
 	var z coord
@@ -177,11 +92,11 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		for j := 0; j < len(p); j++ {
 			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
 		}
-		order := order(f2, true)
-		p = sort(p, order)
+		order := tools.Order(f2, true)
+		p = tools.Sort(p, order)
 		xh = p[0]
 		xl = p[len(p)-1]
-		c = apply(p[1:], 2, mean)
+		c = tools.Apply(p[1:], 2, mean)
 		xr = reflection(xh, c, 1)
 		xci, xco = contraction(xh, c, beta)
 		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
@@ -220,9 +135,9 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		height = f.Call([]reflect.Value{reflect.ValueOf(xl)})[0].Float()
 		fmt.Println(center, height)
 		wse = 0
-		c = apply(p, 2, mean)
+		c = tools.Apply(p, 2, mean)
 		for j := 0; j < len(p); j++ {
-			wse = wse + distance(c, p[j])
+			wse = wse + tools.Dist(c, p[j])
 		}
 	}
 	return
@@ -251,11 +166,11 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		for j := 0; j < len(p); j++ {
 			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
 		}
-		order := order(f2, false)
-		p = sort(p, order)
+		order := tools.Order(f2, false)
+		p = tools.Sort(p, order)
 		xl = p[0]
 		xh = p[len(p)-1]
-		c = apply(p[1:], 2, mean)
+		c = tools.Apply(p[1:], 2, mean)
 		xr = reflection(xl, c, 1)
 		xci, xco = contraction(xl, c, beta)
 		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
@@ -294,9 +209,9 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		height = f.Call([]reflect.Value{reflect.ValueOf(xh)})[0].Float()
 		fmt.Println(center, height)
 		wse = 0
-		c = apply(p, 2, mean)
+		c = tools.Apply(p, 2, mean)
 		for j := 0; j < len(p); j++ {
-			wse = wse + distance(c, p[j])
+			wse = wse + tools.Dist(c, p[j])
 		}
 	}
 	return
@@ -311,7 +226,7 @@ func Neldermead(par []float64, fn interface{}, minimum bool) (center []float64, 
 	// Minimize
 	case true:
 		center, height, iter = minimize(fn, p)
-		// Maximize
+	// Maximize
 	case false:
 		center, height, iter = maximize(fn, p)
 	}

@@ -81,49 +81,6 @@ func TestNelderMead(t *testing.T) {
 			So(out, ShouldEqual, 2)
 		})
 
-		Convey("The mean of each raw of [[1 2 3] [4 5 6]] is [2 5]", func() {
-			x := [][]float64{
-				[]float64{1, 2, 3},
-				[]float64{4, 5, 6},
-			}
-			out := apply(x, 1, mean)
-			So(out, ShouldResemble, []float64{2, 5})
-		})
-
-		Convey("The mean of each column of [[1 2 3] [4 5 6]] is [2.5 3.5 4.5]", func() {
-			x := [][]float64{
-				[]float64{1, 2, 3},
-				[]float64{4, 5, 6},
-			}
-			out := apply(x, 2, mean)
-			So(out, ShouldResemble, []float64{2.5, 3.5, 4.5})
-		})
-
-		x = []float64{3, 2.5, 3.5, 1, 4.5}
-		order := order(x, true)
-		Convey("The decreasing order of [3 2.5 3.5 1 4.5] is [5 3 1 2 4]", func() {
-			So(order, ShouldResemble, []int{5, 3, 1, 2, 4})
-		})
-
-		Convey("The decreasing sort of [3 2.5 3.5 1 4.5] is [4.5 3.5 3 2.5 1]", func() {
-			y := [][]float64{
-				[]float64{1, 1, 1},
-				[]float64{2, 2, 2},
-				[]float64{3, 3, 3},
-				[]float64{4, 4, 4},
-				[]float64{5, 5, 5},
-			}
-			sort := sort(y, order)
-			So(sort[0], ShouldResemble, []float64{5, 5, 5})
-		})
-
-		Convey("The euclidean diastance between [1 1 1] [-1 -1 -1]] is 3.4641016151377544", func() {
-			x := []float64{1, 1, 1}
-			y := []float64{-1, -1, -1}
-			dist := distance(x, y)
-			So(dist, ShouldEqual, 3.4641016151377544)
-		})
-
 		Convey("Given the following dataset ...", func() {
 			var data [][]float64
 			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
