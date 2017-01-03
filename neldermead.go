@@ -1,7 +1,6 @@
 package optimization
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/entropyx/tools"
@@ -87,7 +86,6 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 
 	for wse > 1e-3 {
 		iter++
-		fmt.Printf("Iter %v \n", iter)
 		var f2 []float64
 		for j := 0; j < len(p); j++ {
 			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
@@ -106,34 +104,27 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		z.xs = f2[1]
 		z.xh = f2[0]
 		if z.xr >= z.xl && z.xr < z.xs {
-			fmt.Println("Reflect")
 			p[0] = xr
 		} else if z.xr < z.xl {
 			p[0] = xr
 			xe = expansion(xr, c, gamma)
 			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
-			fmt.Printf("f(xe) = %v \n", z.xe)
 			if z.xe < z.xr {
-				fmt.Println("Expand")
 				p[0] = xe
 			}
 		} else if z.xci < z.xh || z.xco < z.xh {
 			if z.xci < z.xco {
-				fmt.Println("Contract inside")
 				p[0] = xci
 			} else {
-				fmt.Println("Contract outside")
 				p[0] = xco
 			}
 		} else {
-			fmt.Println("Shrink")
 			for i := 0; i < len(p)-1; i++ {
 				p[i] = shrink(xl, p[i], delta)
 			}
 		}
 		center = xl
 		height = f.Call([]reflect.Value{reflect.ValueOf(xl)})[0].Float()
-		fmt.Println(center, height)
 		wse = 0
 		c = tools.Apply(p, 2, mean)
 		for j := 0; j < len(p); j++ {
@@ -161,7 +152,6 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 
 	for wse > 1e-3 {
 		iter++
-		fmt.Printf("Iter %v \n", iter)
 		var f2 []float64
 		for j := 0; j < len(p); j++ {
 			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
@@ -180,34 +170,27 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		z.xs = f2[1]
 		z.xl = f2[0]
 		if z.xr <= z.xh && z.xr > z.xs {
-			fmt.Println("Reflect")
 			p[0] = xr
 		} else if z.xr > z.xh {
 			p[0] = xr
 			xe = expansion(xr, c, gamma)
 			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
-			fmt.Printf("f(xe) = %v \n", z.xe)
 			if z.xe > z.xr {
-				fmt.Println("Expand")
 				p[0] = xe
 			}
 		} else if z.xci > z.xl || z.xco > z.xl {
 			if z.xci > z.xco {
-				fmt.Println("Contract inside")
 				p[0] = xci
 			} else {
-				fmt.Println("Contract outside")
 				p[0] = xco
 			}
 		} else {
-			fmt.Println("Shrink")
 			for i := 0; i < len(p)-1; i++ {
 				p[i] = shrink(xh, p[i], delta)
 			}
 		}
 		center = xh
 		height = f.Call([]reflect.Value{reflect.ValueOf(xh)})[0].Float()
-		fmt.Println(center, height)
 		wse = 0
 		c = tools.Apply(p, 2, mean)
 		for j := 0; j < len(p); j++ {

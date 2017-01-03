@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	m "github.com/entropyx/math"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -19,27 +21,27 @@ func g(z float64) float64 {
 // hypothesis
 func h(x [][]float64, theta []float64) (out []float64) {
 	l1 := len(x)
-	l2 := len(x[0])
+	Theta := [][]float64{theta}
+	prod := m.ParallelMatrixProd(x, Theta)
+
 	for i := 0; i < l1; i++ {
-		prod := 0.0
-		for j := 0; j < l2; j++ {
-			prod = prod + x[i][j]*theta[j]
-		}
-		out = append(out, g(prod))
+		out = append(out, g(prod[i][0]))
 	}
 	return
 }
 
-var y []int
+var y []float64
 var X [][]float64
 
 // Cost
 func J(theta []float64) float64 {
 	m := len(y)
+	t3 := time.Now()
 	h := h(X, theta)
+	fmt.Printf("H time %v \n", time.Since(t3))
 	out := 0.00
 	for i := 0; i < m; i++ {
-		out = out + float64(y[i])*math.Log(h[i]) + (1-float64(y[i]))*math.Log(1-h[i])
+		out = out + y[i]*math.Log(h[i]) + (1-y[i])*math.Log(1-h[i])
 	}
 	out = -out / float64(m)
 	return out
@@ -108,7 +110,7 @@ func TestNelderMead(t *testing.T) {
 
 			for i := 0; i < len(data); i++ {
 				X = append(X, data[i][:3])
-				y = append(y, int(data[i][3]))
+				y = append(y, data[i][3])
 			}
 
 			theta := []float64{0, 0, 0}
