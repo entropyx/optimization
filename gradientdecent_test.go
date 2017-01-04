@@ -12,6 +12,9 @@ import (
 
 func TestGradientFunction(t *testing.T) {
 
+	// Data obtained from the Coursera course https://www.coursera.org/course/ml
+	// of Andrew Ng.
+
 	Convey("Given X ...", t, func() {
 		var data [][]float64
 		filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
