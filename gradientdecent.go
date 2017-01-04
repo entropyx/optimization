@@ -33,7 +33,7 @@ var X [][]float64
 // J Cost function
 func J(theta []float64) float64 {
 	penal := 0.00
-	lambda := 0.00
+	lambda := 0.01
 	m := len(y)
 	h := H(X, theta)
 	out := 0.00
@@ -73,7 +73,7 @@ func grad(X [][]float64, y []float64, theta []float64, lambda float64) []float64
 func Gradientdecent(fn interface{}, p []float64) (optim []float64, height float64) {
 	iter := 5
 	alpha := 0.001
-	lambda := 0.00
+	lambda := 0.01
 	f := reflect.ValueOf(fn)
 	fnType := f.Type()
 	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {

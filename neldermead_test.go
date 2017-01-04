@@ -87,7 +87,7 @@ func TestNelderMead(t *testing.T) {
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
 				minimun, cost, iter := Neldermead(theta, J, true)
 				fmt.Printf("Cost: %v, Iter: %v \n", cost, iter)
-				So(minimun, ShouldResemble, []float64{-25.160920349329682, 0.20622792851376404, 0.201468441137889})
+				So(minimun, ShouldResemble, []float64{-22.888963783387748, 0.18806165951719844, 0.18308160110641086})
 			})
 		})
 	})
