@@ -3,49 +3,12 @@ package optimization
 import (
 	"fmt"
 	"io/ioutil"
-	"math"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
-	m "github.com/entropyx/math"
 	. "github.com/smartystreets/goconvey/convey"
 )
-
-// sigmoid
-func g(z float64) float64 {
-	return 1 / (1 + math.Exp(-z))
-}
-
-// hypothesis
-func h(x [][]float64, theta []float64) (out []float64) {
-	l1 := len(x)
-	Theta := [][]float64{theta}
-	prod := m.ParallelMatrixProd(x, Theta)
-
-	for i := 0; i < l1; i++ {
-		out = append(out, g(prod[i][0]))
-	}
-	return
-}
-
-var y []float64
-var X [][]float64
-
-// Cost
-func J(theta []float64) float64 {
-	m := len(y)
-	t3 := time.Now()
-	h := h(X, theta)
-	fmt.Printf("H time %v \n", time.Since(t3))
-	out := 0.00
-	for i := 0; i < m; i++ {
-		out = out + y[i]*math.Log(h[i]) + (1-y[i])*math.Log(1-h[i])
-	}
-	out = -out / float64(m)
-	return out
-}
 
 func TestNelderMead(t *testing.T) {
 
@@ -85,6 +48,7 @@ func TestNelderMead(t *testing.T) {
 
 		Convey("Given the following dataset ...", func() {
 			var data [][]float64
+
 			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
 			strInfo, err := ioutil.ReadFile(filePath)
 			if err != nil {
@@ -117,7 +81,7 @@ func TestNelderMead(t *testing.T) {
 
 			Convey("The cost of data for theta [0 0 0] is 0.6931471805599458.", func() {
 				cost := J(theta)
-				So(cost, ShouldEqual, 0.6931471805599458)
+				So(cost, ShouldEqual, 0.6931471805599465)
 			})
 
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
