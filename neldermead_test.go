@@ -48,7 +48,6 @@ func TestNelderMead(t *testing.T) {
 
 		Convey("Given the following dataset ...", func() {
 			var data [][]float64
-
 			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
 			strInfo, err := ioutil.ReadFile(filePath)
 			if err != nil {
@@ -71,8 +70,9 @@ func TestNelderMead(t *testing.T) {
 				}
 				data = append(data, values)
 			}
+			l := len(data)
 
-			for i := 0; i < len(data); i++ {
+			for i := 0; i < l; i++ {
 				X = append(X, data[i][:3])
 				y = append(y, data[i][3])
 			}
@@ -87,8 +87,9 @@ func TestNelderMead(t *testing.T) {
 			Convey("The global minimun of cost function is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
 				minimun, cost, iter := Neldermead(theta, J, true)
 				fmt.Printf("Cost: %v, Iter: %v \n", cost, iter)
-				So(minimun, ShouldResemble, []float64{-22.888963783387748, 0.18806165951719844, 0.18308160110641086})
+				So(minimun, ShouldResemble, []float64{-25.160920349329682, 0.20622792851376404, 0.201468441137889})
 			})
+
 		})
 	})
 }
