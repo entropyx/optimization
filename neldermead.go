@@ -1,7 +1,8 @@
 package optimization
 
 import (
-	"reflect"
+	"fmt"
+	"time"
 
 	"github.com/entropyx/tools"
 )
@@ -44,7 +45,7 @@ func shrink(x []float64, y []float64, delta float64) (out []float64) {
 }
 
 func around(c []float64, n int) (out [][]float64) {
-	delta := []float64{0.1, -0.1}
+	delta := []float64{1, 1}
 	for i := 0; i < n; i++ {
 		p := make([]float64, len(c))
 		copy(p, c)
@@ -68,7 +69,73 @@ func mean(x []float64) float64 {
 	return out
 }
 
-func minimize(fn interface{}, p [][]float64) (center []float64, height float64, iter int) {
+// func minimize(fn interface{}, p [][]float64) (center []float64, height float64, iter int) {
+// 	var xh, xl, c, xr, xci, xco, xe []float64
+// 	var z coord
+// 	n := len(p[0])
+// 	beta := 0.75 - 1/(2*float64(n))
+// 	gamma := 2.0 + 2.0/float64(n)
+// 	delta := 1.0 - 1/float64(n)
+// 	wse := 1.00
+// 	iter = 0
+//
+// 	f := reflect.ValueOf(fn)
+// 	fnType := f.Type()
+// 	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
+// 		panic("Expected a unary function returning a single value")
+// 	}
+//
+// 	for wse > 1e-1 {
+// 		iter++
+// 		var f2 []float64
+// 		for j := 0; j < len(p); j++ {
+// 			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
+// 		}
+// 		order := tools.Order(f2, true)
+// 		p = tools.Sort(p, order)
+// 		xh = p[0]
+// 		xl = p[len(p)-1]
+// 		c = tools.Apply(p[1:], 2, mean)
+// 		xr = reflection(xh, c, 1)
+// 		xci, xco = contraction(xh, c, beta)
+// 		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
+// 		z.xci = f.Call([]reflect.Value{reflect.ValueOf(xci)})[0].Float()
+// 		z.xco = f.Call([]reflect.Value{reflect.ValueOf(xco)})[0].Float()
+// 		z.xl = f2[len(f2)-1]
+// 		z.xs = f2[1]
+// 		z.xh = f2[0]
+// 		if z.xr >= z.xl && z.xr < z.xs {
+// 			p[0] = xr
+// 		} else if z.xr < z.xl {
+// 			p[0] = xr
+// 			xe = expansion(xr, c, gamma)
+// 			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
+// 			if z.xe < z.xr {
+// 				p[0] = xe
+// 			}
+// 		} else if z.xci < z.xh || z.xco < z.xh {
+// 			if z.xci < z.xco {
+// 				p[0] = xci
+// 			} else {
+// 				p[0] = xco
+// 			}
+// 		} else {
+// 			for i := 0; i < len(p)-1; i++ {
+// 				p[i] = shrink(xl, p[i], delta)
+// 			}
+// 		}
+// 		center = xl
+// 		height = f.Call([]reflect.Value{reflect.ValueOf(xl)})[0].Float()
+// 		wse = 0
+// 		c = tools.Apply(p, 2, mean)
+// 		for j := 0; j < len(p); j++ {
+// 			wse = wse + tools.Dist(c, p[j])
+// 		}
+// 	}
+// 	return
+// }
+
+func minimize(fn func([]float64) float64, p [][]float64) (center []float64, height float64, iter int) {
 	var xh, xl, c, xr, xci, xco, xe []float64
 	var z coord
 	n := len(p[0])
@@ -78,17 +145,12 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 	wse := 1.00
 	iter = 0
 
-	f := reflect.ValueOf(fn)
-	fnType := f.Type()
-	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
-		panic("Expected a unary function returning a single value")
-	}
-
-	for wse > 1e-3 {
+	for wse > 1e-1 {
 		iter++
+		t := time.Now()
 		var f2 []float64
 		for j := 0; j < len(p); j++ {
-			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
+			f2 = append(f2, fn(p[j]))
 		}
 		order := tools.Order(f2, true)
 		p = tools.Sort(p, order)
@@ -97,9 +159,9 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		c = tools.Apply(p[1:], 2, mean)
 		xr = reflection(xh, c, 1)
 		xci, xco = contraction(xh, c, beta)
-		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
-		z.xci = f.Call([]reflect.Value{reflect.ValueOf(xci)})[0].Float()
-		z.xco = f.Call([]reflect.Value{reflect.ValueOf(xco)})[0].Float()
+		z.xr = fn(xr)
+		z.xci = fn(xci)
+		z.xco = fn(xco)
 		z.xl = f2[len(f2)-1]
 		z.xs = f2[1]
 		z.xh = f2[0]
@@ -108,7 +170,7 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		} else if z.xr < z.xl {
 			p[0] = xr
 			xe = expansion(xr, c, gamma)
-			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
+			z.xe = fn(xe)
 			if z.xe < z.xr {
 				p[0] = xe
 			}
@@ -124,17 +186,18 @@ func minimize(fn interface{}, p [][]float64) (center []float64, height float64, 
 			}
 		}
 		center = xl
-		height = f.Call([]reflect.Value{reflect.ValueOf(xl)})[0].Float()
+		height = fn(xl)
 		wse = 0
 		c = tools.Apply(p, 2, mean)
 		for j := 0; j < len(p); j++ {
 			wse = wse + tools.Dist(c, p[j])
 		}
+		fmt.Printf("Iter %v , time: %s \n", iter, time.Since(t))
 	}
 	return
 }
 
-func maximize(fn interface{}, p [][]float64) (center []float64, height float64, iter int) {
+func maximize(fn func([]float64) float64, p [][]float64) (center []float64, height float64, iter int) {
 	var xh, xl, c, xr, xci, xco, xe []float64
 	var z coord
 	n := len(p[0])
@@ -144,17 +207,12 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 	wse := 1.00
 	iter = 0
 
-	f := reflect.ValueOf(fn)
-	fnType := f.Type()
-	if fnType.Kind() != reflect.Func || fnType.NumIn() != 1 || fnType.NumOut() != 1 {
-		panic("Expected a unary function returning a single value")
-	}
-
 	for wse > 1e-3 {
 		iter++
+		t := time.Now()
 		var f2 []float64
 		for j := 0; j < len(p); j++ {
-			f2 = append(f2, f.Call([]reflect.Value{reflect.ValueOf(p[j])})[0].Float())
+			f2 = append(f2, fn(p[j]))
 		}
 		order := tools.Order(f2, false)
 		p = tools.Sort(p, order)
@@ -163,9 +221,9 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		c = tools.Apply(p[1:], 2, mean)
 		xr = reflection(xl, c, 1)
 		xci, xco = contraction(xl, c, beta)
-		z.xr = f.Call([]reflect.Value{reflect.ValueOf(xr)})[0].Float()
-		z.xci = f.Call([]reflect.Value{reflect.ValueOf(xci)})[0].Float()
-		z.xco = f.Call([]reflect.Value{reflect.ValueOf(xco)})[0].Float()
+		z.xr = fn(xr)
+		z.xci = fn(xci)
+		z.xco = fn(xco)
 		z.xh = f2[len(f2)-1]
 		z.xs = f2[1]
 		z.xl = f2[0]
@@ -174,7 +232,7 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 		} else if z.xr > z.xh {
 			p[0] = xr
 			xe = expansion(xr, c, gamma)
-			z.xe = f.Call([]reflect.Value{reflect.ValueOf(xe)})[0].Float()
+			z.xe = fn(xe)
 			if z.xe > z.xr {
 				p[0] = xe
 			}
@@ -190,18 +248,19 @@ func maximize(fn interface{}, p [][]float64) (center []float64, height float64, 
 			}
 		}
 		center = xh
-		height = f.Call([]reflect.Value{reflect.ValueOf(xh)})[0].Float()
+		height = fn(xh)
 		wse = 0
 		c = tools.Apply(p, 2, mean)
 		for j := 0; j < len(p); j++ {
 			wse = wse + tools.Dist(c, p[j])
 		}
+		fmt.Printf("Iter %v , time: %s \n", iter, time.Since(t))
 	}
 	return
 }
 
 // Neldermead maximize o minimize
-func Neldermead(par []float64, fn interface{}, minimum bool) (center []float64, height float64, iter int) {
+func Neldermead(par []float64, fn func([]float64) float64, minimum bool) (center []float64, height float64, iter int) {
 	n := len(par)
 	p := around(par, n)
 	p = append(p, par)
