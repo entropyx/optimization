@@ -12,19 +12,20 @@ func G(z float64) float64 {
 	return 1 / (1 + math.Exp(-z))
 }
 
+var y []float64
+var X [][]float64
+
 //H hypothesis
-func H(x [][]float64, theta []float64) (out []float64) {
-	l1 := len(x)
-	Theta := [][]float64{theta}
-	prod := ma.ParallelMatrixProd(x, Theta)
+func H(theta []float64) (out []float64) {
+	l1 := len(X)
+	c := make(chan []float64)
+	go ma.MatrixVectorProduct(X, theta, c)
+	prod := <-c
 	for i := 0; i < l1; i++ {
-		out = append(out, G(prod[i][0]))
+		out = append(out, G(prod[i]))
 	}
 	return
 }
-
-var y []float64
-var X [][]float64
 
 const lambda = 0.00
 
@@ -32,7 +33,7 @@ const lambda = 0.00
 func J(theta []float64) float64 {
 	penal := 0.00
 	m := len(y)
-	h := H(X, theta)
+	h := H(theta)
 	out := 0.00
 	for i := 0; i < len(theta); i++ {
 		penal = penal + lambda*math.Pow(theta[i], 2)
