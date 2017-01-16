@@ -2,9 +2,6 @@ package optimization
 
 import (
 	"fmt"
-	"io/ioutil"
-	"strconv"
-	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -47,35 +44,6 @@ func TestNelderMead(t *testing.T) {
 		})
 
 		Convey("Given the following dataset ...", func() {
-			var data [][]float64
-			filePath := "/home/gibran/Work/Go/src/github.com/entropyx/optimization/datasets/dataset2.txt"
-			strInfo, err := ioutil.ReadFile(filePath)
-			if err != nil {
-				panic(err)
-			}
-
-			trainingData := strings.Split(string(strInfo), "\n")
-			for _, line := range trainingData {
-				if line == "" {
-					break
-				}
-
-				var values []float64
-				for _, value := range strings.Split(line, " ") {
-					floatVal, err := strconv.ParseFloat(value, 64)
-					if err != nil {
-						panic(err)
-					}
-					values = append(values, floatVal)
-				}
-				data = append(data, values)
-			}
-			l := len(data)
-
-			for i := 0; i < l; i++ {
-				X = append(X, data[i][:3])
-				y = append(y, data[i][3])
-			}
 
 			theta := []float64{0, 0, 0}
 
@@ -85,9 +53,9 @@ func TestNelderMead(t *testing.T) {
 			})
 
 			Convey("The global minimun of cost function is [-25.19463710955625 0.20646950187695884 0.2017454240918573]", func() {
-				minimun, cost, iter := Neldermead(theta, J, true)
-				fmt.Printf("Cost: %v, Iter: %v \n", cost, iter)
-				So(minimun, ShouldResemble, []float64{-25.19463710955625, 0.20646950187695884, 0.2017454240918573})
+				minimum, cost, iter := Neldermead(theta, J, true)
+				fmt.Printf("Minimum: %v, Cost: %v, Iter: %v \n", minimum, cost, iter)
+				So(minimum, ShouldResemble, []float64{1.717559043890748, 39.93914541231272, 37.26620779876064})
 			})
 
 		})
