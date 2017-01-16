@@ -124,7 +124,7 @@ func TestGradientFunction(t *testing.T) {
 		theta := []float64{0, 0, 0}
 
 		Convey("The global minimun is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
-			minimum := GradientDecent(Grad, theta, 100000)
+			minimum := GradientDecent(Grad, theta, 1.0, 100000)
 			minimum = ma.RescaleCoef(minimum, mu, sigma)
 			fmt.Printf("Gradient Decent Minimum: %v \n", minimum)
 			So(minimum, ShouldResemble, []float64{-25.147655155365698, 0.20612158769765274, 0.2013605688623069})
