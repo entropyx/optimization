@@ -5,9 +5,8 @@ import ma "github.com/entropyx/math"
 // Gradient decent implementation methods
 
 // GradientDecent find local minimum or maximum
-func GradientDecent(fn func([]float64) []float64, p []float64) (optim []float64) {
-	iter := 100000
-	alpha := 1.0
+func GradientDecent(fn func([]float64) []float64, p []float64, iter int) (optim []float64) {
+	alpha := 1.00
 
 	for i := 0; i < iter; i++ {
 		delta := fn(p)

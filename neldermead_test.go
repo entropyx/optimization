@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	ma "github.com/entropyx/math"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -54,10 +55,10 @@ func TestNelderMead(t *testing.T) {
 
 			Convey("The global minimun of cost function is [-25.19463710955625 0.20646950187695884 0.2017454240918573]", func() {
 				minimum, cost, iter := Neldermead(theta, J, true)
-				fmt.Printf("Minimum: %v, Cost: %v, Iter: %v \n", minimum, cost, iter)
-				So(minimum, ShouldResemble, []float64{1.717559043890748, 39.93914541231272, 37.26620779876064})
+				minimum = ma.RescaleCoef(minimum, mu, sigma)
+				fmt.Printf("Nelder-Mead Minimum: %v, Cost: %v, Iter: %v \n", minimum, cost, iter)
+				So(minimum, ShouldResemble, []float64{-25.17136112813701, 0.20628992145498348, 0.20155187729329227})
 			})
-
 		})
 	})
 }

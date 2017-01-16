@@ -13,13 +13,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+var y []float64
+var X [][]float64
+var X2 = make([][]float64, 100)
+var mu = make([]float64, 2)
+var sigma = make([]float64, 2)
+
 // G sigmoid
 func G(z float64) float64 {
 	return 1 / (1 + math.Exp(-z))
 }
-
-var y []float64
-var X [][]float64
 
 //H hypothesis
 func H(theta []float64) (out []float64) {
@@ -107,10 +110,10 @@ func TestGradientFunction(t *testing.T) {
 			X = append(X, data[i][1:3])
 			y = append(y, data[i][3])
 		}
-		X2 := make([][]float64, len(X))
+
 		copy(X2, X)
-		mu := tools.Apply(X2, 2, ma.Mean)
-		sigma := tools.Apply(X2, 2, ma.Sd)
+		mu = tools.Apply(X2, 2, ma.Mean)
+		sigma = tools.Apply(X2, 2, ma.Sd)
 
 		X = ma.Normalize(X)
 
@@ -121,9 +124,9 @@ func TestGradientFunction(t *testing.T) {
 		theta := []float64{0, 0, 0}
 
 		Convey("The global minimun is [-25.16133355416168 0.20623171363284806 0.20147159995083574]", func() {
-			minimum := GradientDecent(Grad, theta)
+			minimum := GradientDecent(Grad, theta, 100000)
 			minimum = ma.RescaleCoef(minimum, mu, sigma)
-			fmt.Printf("Minimum: %v \n", minimum)
+			fmt.Printf("Gradient Decent Minimum: %v \n", minimum)
 			So(minimum, ShouldResemble, []float64{-25.147655155365698, 0.20612158769765274, 0.2013605688623069})
 		})
 	})
