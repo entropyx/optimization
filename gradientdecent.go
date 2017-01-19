@@ -15,7 +15,7 @@ func GradientChecking(fn func([]float64) float64, theta []float64, epsilon float
 	return checking
 }
 
-// GradientDecent find local minimum or maximum
+// GradientDecent find local minimum
 func GradientDecent(gradient func([]float64) []float64, p []float64, alpha float64, iter int) (optim []float64) {
 	for i := 0; i < iter; i++ {
 		delta := gradient(p)

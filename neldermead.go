@@ -145,7 +145,7 @@ func minimize(fn func([]float64) float64, p [][]float64) (center []float64, heig
 	wse := 1.00
 	iter = 0
 
-	for wse > 1e-1 {
+	for wse > 1e-3 {
 		iter++
 		t := time.Now()
 		var f2 []float64
